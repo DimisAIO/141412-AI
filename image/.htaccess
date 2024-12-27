@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# Prevent direct access to index.php from causing a loop
+RewriteCond %{REQUEST_URI} !^/image/index.php$
+
+# Rewrite all requests to index.php
+RewriteRule ^.*$ ../index.php [L,QSA]

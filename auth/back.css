@@ -1,0 +1,16 @@
+#back {
+    position: absolute;
+  	background-color: black;
+  	color: white;
+    left: 10px;
+    margin: 10px;
+    font-size: 24px;
+    border-style: solid;
+    border-color: white;
+    border-radius: 1px;
+    transition: .25s ease-in-out;
+}
+
+#back:hover {
+    background-color: #18183B;
+}

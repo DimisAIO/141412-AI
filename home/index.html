@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>141412.AI</title>
+    <link rel="stylesheet" href="style.css?devll">
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        #toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            height: 40px;
+            background-color: darkblue;
+        }
+        #toolbarLeft {
+            padding-left: 8px;
+        }
+        #toolbarRight {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            padding-right: 8px;
+        }
+        #loginButton {
+            color: white;
+            text-decoration: none;
+            transition: .25s ease-in-out;
+        }
+        #loginButton:hover {
+            color: lime;
+        }
+        #container {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+        }
+        #benefits {
+            display: flex;
+            flex-direction: row;
+        }
+        #card {
+            background-color: black;
+            padding: 20px;
+            padding-top: 2px;
+            padding-bottom: 2px;
+            max-width: 20vw;
+            margin: 3px;
+        }
+        #card > p {
+            font-size: 1.1vw;
+        }
+        @media screen
+        and (max-device-width: 480px)
+        and (orientation: portrait) { 
+            p {
+                font-size: 200vw;
+            }
+            body {
+                zoom: 150%;
+                font-size: 8px;
+            }
+            h1 {
+                text-align: center;
+            }
+            #toolbar {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <div id="toolbarLeft">141412.AI</div> <div id="toolbarRight"><a href="/auth" id="loginButton">Login</a></div>
+    </div>
+    <div id="container">
+        <h1>141412.AI, an AI Chatbot by DimisAIO</h1>
+        <div id="benefits">
+            <div id="card">
+                <h3>Free</h3>
+                <p>141412 AI is free, does not sell your data, nor does it inject ads onto this site</p>
+            </div>
+            <div id="card">
+                <h3>Open Source</h3>
+                <p>141412 AI is available under the <a href="https://choosealicense.com/licenses/mit/"></a> license on <a href="https://github.com/DimisAIO/141412AI">GitHub</a></p>
+            </div>
+        </div>
+        <div id="benefits">
+            <div id="card">
+                <h3>Easy to Use</h3>
+                <p>The design is simple and very intuitive. Mobile devices have been thought about.</p>
+            </div>
+            <div id="card">
+                <h3>Fully-featured</h3>
+                <p>We merged multiple ideas, such as custom chats (C.AI), voice recording and image generation! All, in, one.</p>
+            </div>
+        </div>
+        <h2>Want to try out? <a href="/auth" id="loginButton">Click here!</a></h2>
+        <button id="install" hidden>Install App (mobile only)</button>
+    </div>
+    <script>
+        let installPrompt = null;
+        const installButton = document.querySelector("#install");
+
+        window.addEventListener("beforeinstallprompt", (event) => {
+            event.preventDefault();
+            installPrompt = event;
+        });
+
+        // main.js
+
+        installButton.addEventListener("click", async () => {
+            if (!installPrompt) {
+                if(iOS()) {
+                    alert("1. Click on the share icon\n2. Choose \"Add to Home Screen\"");
+                }
+                return;
+            }
+            const result = await installPrompt.prompt();
+            console.log(`Install prompt was: ${result.outcome}`);
+            disableInAppInstallPrompt();
+        });
+
+        function disableInAppInstallPrompt() {
+            installPrompt = null;
+            installButton.setAttribute("hidden", "");
+        }
+        function iOS() {
+            return [
+                'iPad Simulator',
+                'iPhone Simulator',
+                'iPod Simulator',
+                'iPad',
+                'iPhone',
+                'iPod'
+            ].includes(navigator.platform)
+            // iPad on iOS 13 detection
+            || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+        }
+
+        installButton.removeAttribute("hidden");
+    </script>
+</body>
+</html>
