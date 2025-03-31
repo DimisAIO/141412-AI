@@ -13,6 +13,8 @@ require __DIR__ . "/../libs/libAccount.php";
 if(isBanned()) exit(printBan());
 
 require __DIR__ . "/../libs/db.php";
+require __DIR__ . "/../config/other.php";
+
 /*
 $query = $db->prepare("SELECT banned FROM users WHERE id = :id");
 $query->execute([':id' => intval($_SESSION["id"])]);
@@ -48,10 +50,51 @@ if($query->rowCount() != 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title><?=$aiName?> - Dashboard</title>
     <link rel="manifest" href="/manifest.json">
   	<script src="https://polyfill-fastly.io/v3/polyfill.min.js?features=default%2CString.prototype.replaceAll"></script>
   	<style>      
+      
+      .pfp {
+        width: 4%;
+      	border-style: solid;
+        border-radius: 20px;
+      }
+      
+      #aniPC {
+      	display: none;
+      }
+      
+      #aniMobi {
+      	display: none;
+      }
+      
+      .rainbow {
+          display: flex;
+          align-items: center;
+          text-align: center;
+          text-decoration: none;
+          font-family: monospace;
+          letter-spacing: 5px;
+      }
+      .rainbow_text_animated {
+          background: linear-gradient(to right, #6666ff, #0099ff , #00ff00, #ff3399, #6666ff);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          animation: rainbow_animation 6s ease-in-out infinite;
+          background-size: 400% 100%;
+      }
+
+      @keyframes rainbow_animation {
+          0%,100% {
+              background-position: 0 0;
+          }
+
+          50% {
+              background-position: 100% 0;
+          }
+      }
       
       button, input[type="submit"] {
       	background-color: black;
@@ -105,7 +148,7 @@ if($query->rowCount() != 0) {
             /* background-color: rgb(17, 17, 17); /* Specify your desired background color */
             background-color: #131316;
         }
-        .right-div, #accountManager {
+        .right-div, #accountManager, #exploreTab {
             width: 80%;
             flex: 1;
             background-color: #18181B; /* Specify your desired background color */
@@ -123,6 +166,10 @@ if($query->rowCount() != 0) {
             resize: none;
             font-size: 16px;
           	min-height: 35px;
+          	background-color: transparent;
+          	color: white;
+          	border-color: white;
+          	border-width: 2px;
         }
         #holder, #sendMessage, #sendImage {
             height: 40px; /* Set the same height as the textarea */
@@ -187,11 +234,37 @@ if($query->rowCount() != 0) {
       #ldivbtn {
         font-size: 30px;
       }
+     @media only screen 
+       and (min-width: 1024px) 
+       and (max-height: 1366px) 
+       and (-webkit-min-device-pixel-ratio: 1.5)
+       and (hover: none)
+       and (pointer: coarse) {
+         #ldivbtn {
+           font-size: 20px;
+         }
+         .left-div {
+         	width: 30vw;
+         }
+      }
+      @media only screen 
+	   and (orientation: portrait) 
+       and (-webkit-min-device-pixel-ratio: 1.5)
+       and (hover: none)
+       and (pointer: coarse) {
+         #ldivbtn {
+           font-size: 20px;
+         }
+         .left-div {
+         	width: 30vw;
+         }
+      }
+
       #wtf {
      	  display: flex;
         flex-direction: row;
       }
-      #iframe, #accountManager {
+      #iframe, #accountManager, #exploreTab {
         display: none;
       }
       #exitbtn {
@@ -255,6 +328,9 @@ if($query->rowCount() != 0) {
           #mychat > img {
           	width: 20%
           }
+          .pfp {
+          	width: 8%;
+          }
       }
       
       @media screen
@@ -265,6 +341,14 @@ if($query->rowCount() != 0) {
           }
           #mychats {
             height: 40vh;
+          }
+      }
+      
+      @media screen
+        and (max-height: 560px)
+        and (orientation: portrait){
+          #mychats {
+          	height: 55%;
           }
       }
       
@@ -339,7 +423,7 @@ if($query->rowCount() != 0) {
 <body>
     <div class="container">
         <div class="left-div">
-          <div id="die"><button onclick="rotation()" id="ldivbtn">≡</button><button id="ldivbtn" onclick="clearChat()">+</button></div>
+          <div id="die"><button onclick="rotation()" id="ldivbtn">≡</button><code id="aniPC" class="rainbow rainbow_text_animated"><?=$aiName?></code><button id="ldivbtn" onclick="clearChat()">+</button><code id="aniMobi" class="rainbow rainbow_text_animated"><?=$aiName?></code></div>
             <div id="chats">
                <?php
                 echo "<div id='savedchat'>";
@@ -352,7 +436,7 @@ if($query->rowCount() != 0) {
                       $query = $db->prepare("SELECT name FROM systemchats WHERE ID = :id");
                       $query->execute([':id' => $saID]);
                       $saName = htmlspecialchars($query->fetchColumn());
-                    } else $saName = "141412 AI";
+                    } else $saName = $aiName;
                     echo "<div id='insidesc'>";
                     echo "<img src='/image/$saID' width='10%'>&nbsp;";
                     echo "<span>";
@@ -377,19 +461,27 @@ if($query->rowCount() != 0) {
               <p>kms</p> -->
               <?php
                 if(!empty($rs)) {
-                  echo "<h2>Choose a chat!</h2>";
+                  require_once __DIR__ . '/../libs/HTMLPurifier/HTMLPurifier.auto.php';
+                  require_once __DIR__ . '/../libs/Parsedown.php';
+                  
+                  $pd = new Parsedown();
+
+                  $config = HTMLPurifier_Config::createDefault();
+                  $purifier = new HTMLPurifier($config);
+
+                  echo "<h2>Choose a chat or <a href='javascript:charMgmt(3)' style='text-decoration: underline dashed'>explore</a>!</h2>";
                   echo "<div id='mychats'>";
                   foreach($rs as $chat) {
                     echo "<div id='mychat'>";
                     $id = $chat["ID"];
                     $sysmes = htmlspecialchars($chat["name"]);
-                    $intro = $chat["intro"];
+                    $intro = $purifier->purify($pd->text($chat["intro"]));
                     echo "<img src='/image/$id' width='10%' onclick='choose($id, \"$intro\", \"$sysmes\")'>&nbsp;<a href='javascript:void(0)' onclick='choose($id, \"$intro\", \"$sysmes\")'>$sysmes</a>";
                     echo "</div>";
                   } 
                   echo "</div>";
                 } else {
-                    echo "<h2>No chats yet.</h2>";
+                    echo "<h2>No chats yet. <a href='javascript:charMgmt(3)' style='text-decoration: underline dashed'>Explore</a>?</h2>";
                 }
               ?>
               <h3><a href="javascript:charMgmt(1)">Manage!</a></h3>
@@ -398,7 +490,7 @@ if($query->rowCount() != 0) {
 				
             </div>
             <div id="convo">
-                <textarea id="messageText" name="message" form="msgform"></textarea>
+                <textarea id="messageText" name="message" form="msgform" placeholder="Message ChatBox..."></textarea>
                 <button id="holder">🎙</button>
                 <button id="sendImage">📷</button>
                 <button id="sendMessage">📤</button>
@@ -417,14 +509,18 @@ if($query->rowCount() != 0) {
           <a href="javascript:charMgmt(0)" id="exitbtn">Exit</a>
           <iframe src="/auth/tools.php" frameborder="0" width="100%" height="100%"></iframe>
         </div>
+        <div class="right-div" id="exploreTab">
+          <a href="javascript:charMgmt(0)" id="exitbtn">Exit</a>
+          <iframe src="/explore/" frameborder="0" width="100%" height="100%"></iframe>
+        </div>
     </div>
     <input type="hidden" id="system">
     <input type="hidden" id="chatID">
     <script>
-        let chatbotname = "141412 AI";
+        let chatbotname = "<?=$aiName?>";
 	
       	function showGenerating() {
-			const tst = chatbotname ? chatbotname : "141412 AI";
+			const tst = chatbotname ? chatbotname : "<?=$aiName?>";
           
           	var messageArray = [
             	"Generating, please wait...",
@@ -439,7 +535,7 @@ if($query->rowCount() != 0) {
             var what = document.createElement("div");
           	what.setAttribute("id", "generating");
           	chat.appendChild(what);
-            generating.innerHTML += '<p id="you"><img src="/image/' + sys + '" width="4%">&nbsp;' + tst + '</p>';
+            generating.innerHTML += '<p id="you"><img src="/image/' + sys + '" class="pfp">&nbsp;' + tst + '</p>';
             generating.innerHTML += "<div id=ai>" + randomMessage + "</div>";
         }
       
@@ -464,8 +560,9 @@ if($query->rowCount() != 0) {
           chat.innerHTML = "";
           chatID.value = 0;
           system.value = 0;
-          chatbotname = "141412 AI";
+          chatbotname = "<?=$aiName?>";
           intro.style.display = "flex";
+          messageText.placeholder = `Message <?=$aiName?>...`;
           if(mobileCheck() && ldshown) rotation();
         }
 
@@ -477,6 +574,7 @@ if($query->rowCount() != 0) {
             document.getElementById("chatID").value = chatID;
             document.getElementById("system").value = saID;
             chatbotname = cbn;
+            messageText.placeholder = `Message ${cbn}...`;
             if(mobileCheck()) rotation();
           });
         }
@@ -485,16 +583,25 @@ if($query->rowCount() != 0) {
             // Character Manager (1)
             document.getElementsByClassName("right-div")[0].style.display = "none";
             document.getElementsByClassName("right-div")[1].style.display = "block";
+			exploreTab.style.display = "none";
             accountManager.style.display = "none";
           } else if (yes == 2) {
             // Account Manager (2)
             document.getElementsByClassName("right-div")[0].style.display = "none";
             document.getElementsByClassName("right-div")[1].style.display = "none";
+			exploreTab.style.display = "none";
             accountManager.style.display = "block";
+          } else if (yes == 3) {
+            // Character Explorer (3)
+            document.getElementsByClassName("right-div")[0].style.display = "none";
+            document.getElementsByClassName("right-div")[1].style.display = "none";
+			exploreTab.style.display = "block";
+            accountManager.style.display = "none";
           } else {
             // Chat (0)
             document.getElementsByClassName("right-div")[0].style.display = "block";
             document.getElementsByClassName("right-div")[1].style.display = "none";
+			exploreTab.style.display = "none";
             accountManager.style.display = "none";
           }
         }
@@ -518,9 +625,12 @@ if($query->rowCount() != 0) {
         function choose(chattxt, introtxt, name) {
           system.value = chattxt; // cyka blyat
           intro.style.display = "none";
-          chat.innerHTML += '<p id="you"><img src="/image/' + chattxt + '" width="4%">&nbsp;' + name + '</p>';
+          chat.innerHTML = `<center><h1 class="rainbow_text_animated">${name}</h1><a href="javascript:void(0)" onclick='choose(${chattxt}, "${introtxt}", "${escapeHtml(name)}")'>New chat with bot</a></center>`;
+          chat.innerHTML += '<p id="you"><img class="pfp" src="/image/' + chattxt + '" width="4%">&nbsp;' + name + '</p>';
+          introtxt = introtxt ? introtxt : "(No Introductory Message)";
           chat.innerHTML += `<div id=ai>${introtxt}</div><br>`;
           chatbotname = name;
+          messageText.placeholder = `Message ${name}...`;
         }
     </script>
 </body>
@@ -539,10 +649,12 @@ if($query->rowCount() != 0) {
   let nomic = false;
   
   if(mobileCheck()) {
+    aniMobi.style.display = "flex";
+    aniMobi.style.marginLeft = "10px";
     rdivbtn[1].innerText = "+";
     rdivbtnpermbutton[0].innerText = "👤"; // To avoid issues with overflowing!
   	rotation();
-  }
+  } else aniPC.style.display = "flex";
 
   function rotation() {
   	if(ldshown) {
@@ -602,10 +714,11 @@ if($query->rowCount() != 0) {
       if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
         const message = xhr.response;
         const match = xhr.response.split("-")[0];
-        const tst = chatbotname ? chatbotname : "141412 AI";
+        const tst = chatbotname ? chatbotname : "<?=$aiName?>";
         const sys = system.value ? system.value : 0;
         generating.remove();
-        chat.innerHTML += '<p id="you"><img src="/image/' + sys + '" width="4%">&nbsp;' + tst + '</p>';
+        if(message.startsWith("Error: ")) return alert(message);
+        chat.innerHTML += '<p id="you"><img src="/image/' + sys + '" class="pfp">&nbsp;' + tst + '</p>';
         chat.innerHTML += "<div id=ai>" + message.slice(match.length+1) + "</div>";
         if(!chatID.value || chatID.value == 0) savedchat.innerHTML = `<div id="insidesc"><img src="/image/${sys}" width="10%">&nbsp;<a href="javascript:void(0)" onclick="delChat(${match})" id="danger">[X]</a>&nbsp;<a href="javascript:void(0)" onclick='loadChat(${match}, 0, "${tst}")'>${escapeHtml(decodeURI(msg.replaceAll("<br>", " ").substr(0, 70)))}</a></div><hr>` + savedchat.innerHTML
         chatID.value = match;
@@ -614,15 +727,17 @@ if($query->rowCount() != 0) {
     };
     msg = messageText.value;
     msg = encodeURI(msg).replaceAll("%0A", "<br>");
-    chat.innerHTML += '<p id="you"><img src="/image/-1" width="4%">&nbsp;<?=$_SESSION["username"]?></p>';
+    chat.innerHTML += '<p id="you"><img src="/image/-1" class="pfp">&nbsp;<?=$_SESSION["username"]?></p>';
     /* So bad, firefox 52.9.0 ESR needs to work
       chat.innerHTML += "<div id=me></div>";
       if(me.length === undefined) me.innerText = messageText.value;
       else me[me.length-1].innerText = messageText.value;
     */
     const newDiv = document.createElement("div");
+    const newPTag = document.createElement("p");
     newDiv.id = "me";
-    newDiv.innerText = messageText.value;
+    newPTag.innerText = messageText.value;
+    newDiv.append(newPTag);
     chat.append(newDiv);
     messageText.value = "";
     xhr.send("message=" + msg + "&system=" + system.value + "&chatID=" + chatID.value + "&token=" + token.value);
@@ -727,7 +842,7 @@ navigator.mediaDevices.getUserMedia({ audio: true })
           else me[me.length-1].remove();
           messageText.disabled = holder.disabled = sendMessage.disabled = sendImage.disabled = false;
           messageText.value = xhr.response;
-          if(messageText.value.startsWith("Error")) return;
+          if(messageText.value.startsWith("Error: ")) return alert(xhr.response);
           sendMessage.click();
         }
       };
@@ -776,5 +891,19 @@ navigator.mediaDevices.getUserMedia({ audio: true })
     	sendMessage.click(); // epok key even listener
     } else messageText.style.height = (messageText.scrollHeight) + "px";
   });
+  
+  <?php
+  	if(!empty($_GET["start"])) {
+    	$query = $db->prepare("SELECT name, intro FROM systemchats WHERE id = :id AND isPub=1");
+        $query->execute([':id' => intval($_GET["start"])]);
+
+        $result = $query->fetch();
+      	$id = intval(intval($_GET["start"]));
+      	$name = $result["name"];
+      	$sysmes = $result["intro"];
+      	echo "choose($id, \"$sysmes\", \"$name\");";
+      	echo "window.history.replaceState({}, document.title, '/dash');";
+    }
+  ?>
 
 </script>

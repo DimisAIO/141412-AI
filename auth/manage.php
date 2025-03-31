@@ -18,7 +18,23 @@ if(!empty($_POST["username"]) && filter_var($_POST["email"], FILTER_VALIDATE_EMA
 if(!empty($_POST["oldpassword"]) && !empty($_POST["newpassword"]) && !empty($_POST["confirmpassword"])) {
   if(!csrfCheck()) exit("No Token");
 	$passStat = chgPassword($_POST["oldpassword"], $_POST["newpassword"], $_POST["confirmpassword"]);
-} 
+}
+
+require __DIR__ . "/../libs/db.php";
+if(!empty($_POST["model"])) {
+    if(!csrfCheck()) exit("No Token");
+	$query = $db->prepare("UPDATE users SET model=:model WHERE id=:id");
+  	$query->execute([':model' => $_POST["model"], ':id' => $_SESSION["id"]]);
+  	$model = $_POST["model"];
+} else {
+	$query = $db->prepare("SELECT model FROM users WHERE id=:id");
+  	$query->execute([':id' => $_SESSION["id"]]);
+  	$model = $query->fetchColumn();
+}
+
+$query = $db->prepare("SELECT email FROM users WHERE id=:id");
+$query->execute([':id' => $_SESSION["id"]]);
+$email = $query->fetchColumn();
 
 ?>
 <!DOCTYPE html>
@@ -50,6 +66,13 @@ if(!empty($_POST["oldpassword"]) && !empty($_POST["newpassword"]) && !empty($_PO
               zoom: 95%;
           }
         }
+        @media screen
+        and (max-device-width: 320px)
+        and (orientation: portrait){
+          form {
+              margin-bottom: 0;
+          }
+        }
       h1, a {
       	margin-bottom: 10px;
       }
@@ -65,7 +88,6 @@ if(!empty($_POST["oldpassword"]) && !empty($_POST["newpassword"]) && !empty($_PO
   	<button id="back"><=</button>
     <center>
       <h1>Hi, <?=$_SESSION["username"]?>!</h1>
-      <a href="tools.php">Other Tools</a>
   	</center>
   	<center>
   	<?php
@@ -92,7 +114,7 @@ if(!empty($_POST["oldpassword"]) && !empty($_POST["newpassword"]) && !empty($_PO
         <form method="POST">
             <input type="hidden" name="token" value="<?=$_SESSION["token"]?>">
             <input type="text" name="username" value="<?=$_SESSION['username']?>">
-            <input type="text" name="email" value="<?=$_SESSION['email']?>">
+            <input type="text" name="email" value="<?=$email?>">
             <input type="submit">
         </form>
         <form method="POST">
@@ -103,6 +125,10 @@ if(!empty($_POST["oldpassword"]) && !empty($_POST["newpassword"]) && !empty($_PO
             <input type="password" placeholder="Confirm Password" name="confirmpassword" id="confirmpassword" autocomplete="new-password">
             <p>Password must have min. 12 chars, upper and lowercase letters as well as numbers.<br>You can't use your current password either.</p>
             <input type="submit" id="go" disabled>
+        </form>
+      	<form method="POST">
+            <input type="hidden" name="token" value="<?=$_SESSION["token"]?>">
+            <p><a href="https://developers.cloudflare.com/workers-ai/models/" target="_blank" rel="noreferrer" rel="noopener">Model (Advanced):</a><br><input type="text" name="model" value="<?=$model?>">&nbsp;<input type="submit"></p>
         </form>
     </center>
     <script>

@@ -1,7 +1,9 @@
 <?php
 require "libs/db.php";
 session_start();
-if(str_starts_with($_SERVER["REQUEST_URI"], "/image") && !empty($_SESSION["id"])) {
+// stmt made to support PHP 5!
+$stmt = function_exists("str_starts_with") ? str_starts_with($_SERVER["REQUEST_URI"], "/image") : (strpos($_SERVER["REQUEST_URI"], "/image") === 0);
+if($stmt && !empty($_SESSION["id"])) {
     $pfp = intval(str_replace("/image/", "", $_SERVER["REQUEST_URI"]));
   	header_remove("Expires");
     header_remove("Pragma");
@@ -15,7 +17,12 @@ if(str_starts_with($_SERVER["REQUEST_URI"], "/image") && !empty($_SESSION["id"])
     $query = $db->prepare("SELECT userID FROM systemchats WHERE ID = :id");
     $query->execute([':id' => $pfp]);
     if($query->rowCount() == 0) exit(http_response_code(404));
-    if($query->fetchColumn() != $_SESSION["id"]) exit(http_response_code(403));
+    if($query->fetchColumn() != $_SESSION["id"]) {
+      	$query = $db->prepare("SELECT isPub FROM systemchats WHERE ID = :id");
+    	$query->execute([':id' => $pfp]);
+      	$isPub = $query->fetchColumn();
+      	if(!$isPub) exit(http_response_code(403));
+    }
     $file = __DIR__ . "/data/$pfp";
     if(!file_exists($file)) $file = __DIR__ . "/data/0";
     $mimeType = mime_content_type($file);

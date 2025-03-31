@@ -54,6 +54,6 @@ unlock();
 // no copy($musicFile, __DIR__ . "/../test.ogg");
 
 if($server_output->success) echo $server_output->result->text;
-else echo "Error";
+else echo "Error: Couldn't get voice transcription.";
 
 exit;

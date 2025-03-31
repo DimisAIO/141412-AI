@@ -6,6 +6,9 @@ require __DIR__ . "/../libs/libAccount.php";
 require __DIR__ . "/../libs/db.php";
 if(isBanned()) exit(printBan());
 echo '<input type="hidden" id="token" name="token" value="' . $_SESSION["token"] . '">';
+$query = $db->prepare("SELECT isAdmin FROM users WHERE id = :id");
+$query->execute([':id' => $_SESSION["id"]]);
+$check = $query->fetchColumn();
 ?>
 
 <!DOCTYPE html>
@@ -49,6 +52,10 @@ echo '<input type="hidden" id="token" name="token" value="' . $_SESSION["token"]
 <body>
   <h2>My Account (ID: <?=$_SESSION["id"]?>)</h2>
   <a href="./manage.php"><button>My Profile</button></a>
+  <a href="./api.php"><button>Developer (API Key, BETA)</button></a>
+  <?php
+  	if($check) echo '<a href="/admin" target="_parent"><button>Admin</button></a>';
+  ?>
 <!-- Abandoned feature:
   <button>My Devices (WIP)</button>
   <button>Disconnect All Devices (WIP)</button>

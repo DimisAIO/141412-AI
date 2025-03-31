@@ -12,7 +12,8 @@ if($query->rowCount() == 0) exit("-1");
 
 $chatbots = $query->fetchAll(PDO::FETCH_ASSOC);
 
-$cache[0] = "141412 AI";
+require __DIR__ . "/../config/other.php";
+$cache[0] = $aiName;
 
 foreach($chatbots as $chatbot) {
 	$cache[$chatbot["ID"]] = $chatbot["name"];

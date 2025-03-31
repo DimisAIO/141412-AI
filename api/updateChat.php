@@ -14,6 +14,7 @@ require __DIR__ . "/../libs/db.php";
 $chatName = !empty($_POST["chatName"]) ? $_POST["chatName"] : exit("-1");
 $systemText = !empty($_POST["systemText"]) ? $_POST["systemText"] : exit("-1");
 $introText = $_POST["introText"];
+$isPub = $_POST["isPub"] ? 1 : 0;
 
 if(!empty($_POST["chatID"])) {
     // Update Chat
@@ -25,12 +26,12 @@ if(!empty($_POST["chatID"])) {
     if($query->rowCount() == 0) exit(http_response_code(500));
     if($query->fetchColumn() != $_SESSION["id"]) exit("-2");
 
-    $query = $db->prepare("UPDATE systemchats SET name=:name, sysmes=:sysmes, intro=:intro WHERE ID=:id");
-    $query->execute([':name' => $chatName, ':sysmes' => $systemText, ':intro' => $introText, ':id' => $chatID]);
+    $query = $db->prepare("UPDATE systemchats SET name=:name, sysmes=:sysmes, intro=:intro, isPub=:pub WHERE ID=:id");
+    $query->execute([':name' => $chatName, ':sysmes' => $systemText, ':intro' => $introText, ':id' => $chatID, ':pub' => $isPub]);
 } else {
     // New Chat (0 => Empty)
-    $query = $db->prepare("INSERT INTO systemchats (name, sysmes, intro, userID) VALUES (:name, :sysmes, :intro, :userID)");
-    $query->execute([':name' => $chatName, ':sysmes' => $systemText, ':intro' => $introText, ':userID' => $_SESSION["id"]]);
+    $query = $db->prepare("INSERT INTO systemchats (name, sysmes, intro, userID, isPub) VALUES (:name, :sysmes, :intro, :userID, :pub)");
+    $query->execute([':name' => $chatName, ':sysmes' => $systemText, ':intro' => $introText, ':userID' => $_SESSION["id"], ':pub' => $isPub]);
     $chatID = $db->lastInsertId();
 }
 

@@ -28,7 +28,6 @@ function chgEmail($username, $email) {
     $query = $db->prepare("UPDATE users SET username=:username, email=:email WHERE ID=:id");
     $query->execute([':username' => htmlspecialchars(strtolower($username)), ':email' => $email, ':id' => $_SESSION["id"]]);
     $_SESSION["username"] = htmlspecialchars(strtolower($username));
-    $_SESSION["email"] = $email;
 }
 
 function chgPassword($old, $new, $confirm) {
@@ -40,8 +39,8 @@ function chgPassword($old, $new, $confirm) {
   	if($new != $confirm) return -2; // New and Confirm Pass Don't Match
     $password = $new; // fuck my life
     if($password != $old && $password != $_SESSION["username"] && intval($password) != $password && strtolower($password) != $password && strlen($password) >= 12) {
-      $query = $db->prepare("UPDATE users SET password=:password WHERE ID=:id");
-      $query->execute([':password' => password_hash($password, PASSWORD_DEFAULT), ':id' => $_SESSION["id"]]);
+      $query = $db->prepare("UPDATE users SET password=:password, auth=:auth WHERE ID=:id");
+      $query->execute([':password' => password_hash($password, PASSWORD_DEFAULT), ':auth' => password_hash(newCSRFToken(), PASSWORD_DEFAULT), ':id' => $_SESSION["id"]]);
       return 1;
     } else return -3; // Failed to abide by password rules
 }
@@ -55,16 +54,34 @@ function checkUser($type, $string) {
     return $query->rowCount() != 0;
 }
 
+function setAuthSecurity() {
+   		require "db.php";
+        $token = newCSRFToken();
+      	$_SESSION["auth"] = $token;
+        $query = $db->prepare("UPDATE users SET auth=:auth WHERE ID=:id");
+        $query->execute([':auth' => password_hash($token, PASSWORD_DEFAULT), ':id' => $_SESSION["id"]]);
+}
+
 function isBanned() {
   	$userID = $_SESSION["id"];
   	$username = $_SESSION["username"];
     require "db.php";
+  	$query = $db->prepare("SELECT auth FROM users WHERE id = :id");
+    $query->execute([':id' => intval($userID)]);
+    if($query->rowCount() == 0) exit(header("Location: /"));
+	$auth = $query->fetchColumn();
+  	if(empty($auth)) {
+		setAuthSecurity();
+    } elseif(!password_verify($_SESSION["auth"], $auth)) {
+    	session_destroy();
+      	exit(header("Location: /"));
+    }
     if(empty($userID) || empty($username)) exit(header("Location: /"));
   	if(!checkUser("username", $username)) exit(header("Location: /"));
     $query = $db->prepare("SELECT banned FROM users WHERE id = :id");
     $query->execute([':id' => intval($userID)]);
-    if($query->rowCount() == 0) exit(header("Location: /"));
-    return $query->fetchColumn() == 1;
+    if($query->fetchColumn() == 1) return empty($_SESSION["goBack"]);
+  	else return false;
 }
 
 function printBan() {
@@ -80,6 +97,7 @@ function newCSRFToken() {
 
 function login($useremail, $password) {
     require "db.php";
+  	require __DIR__."/../config/other.php";
 
     // Check and sanitize user email
     if (!empty($useremail)) {
@@ -99,7 +117,7 @@ function login($useremail, $password) {
     $string = filter_var($useremail, FILTER_VALIDATE_EMAIL) ? "email" : "username";
 
     // Query the database for the user
-    $query = $db->prepare("SELECT id, password, username, email FROM users WHERE $string LIKE :id AND isActivated=1");
+    $query = $db->prepare("SELECT id, password, username FROM users WHERE $string LIKE :id AND isActivated=1");
     $query->execute([':id' => $username]);
 
     // Check if the user exists
@@ -129,8 +147,8 @@ function login($useremail, $password) {
     // Set session and return success
     $_SESSION["id"] = $response["id"];
     $_SESSION["username"] = $response["username"];
-    $_SESSION["email"] = $response["email"];
     $_SESSION["token"] = newCSRFToken();
+  	setAuthSecurity();
     $userID = $response["id"];
 
     /*
@@ -151,12 +169,15 @@ function login($useremail, $password) {
     if(!is_dir(__DIR__ . "/../data/accounts/$userID")) mkdir(__DIR__ . "/../data/accounts/$userID", 0777, true);
 
 
+	$query = $db->prepare("UPDATE users SET IP = :ip WHERE id = :id");
+    $query->execute([':ip' => $ip, ':id' => $userID]);
+  
     return 1;
 }
 
 function register($username, $password, $email) {
     require "db.php";
-    $ip = $_SERVER["REMOTE_ADDR"]; // needs fix
+	require __DIR__."/../config/other.php";
 
     // Check and sanitize username
     if(!empty($username)) {

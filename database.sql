@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1:3306
--- Généré le : ven. 27 déc. 2024 à 20:31
+-- Généré le : lun. 31 mars 2025 à 10:20
 -- Version du serveur : 10.11.10-MariaDB-ubu2204
 -- Version de PHP : 8.1.30
 
@@ -24,6 +24,18 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `apikeys`
+--
+
+CREATE TABLE `apikeys` (
+  `id` int(11) NOT NULL,
+  `keyName` varchar(255) NOT NULL,
+  `accountID` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `chats`
 --
 
@@ -38,6 +50,20 @@ CREATE TABLE `chats` (
 -- --------------------------------------------------------
 
 --
+-- Structure de la table `devices`
+--
+
+CREATE TABLE `devices` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `location` varchar(255) NOT NULL,
+  `accountID` int(11) NOT NULL,
+  `sID` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Structure de la table `systemchats`
 --
 
@@ -45,8 +71,9 @@ CREATE TABLE `systemchats` (
   `ID` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `userID` int(11) NOT NULL,
-  `sysmes` varchar(255) NOT NULL,
-  `intro` varchar(255) NOT NULL DEFAULT ''
+  `isPub` tinyint(1) NOT NULL DEFAULT 0,
+  `sysmes` text NOT NULL,
+  `intro` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -61,15 +88,24 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `IP` varchar(69) NOT NULL DEFAULT '127.0.0.1',
+  `isAdmin` tinyint(1) NOT NULL DEFAULT 0,
   `isActivated` tinyint(1) NOT NULL,
   `activationCode` varchar(255) DEFAULT NULL,
   `banned` tinyint(1) NOT NULL DEFAULT 0,
-  `banreason` varchar(255) DEFAULT ''
+  `banreason` varchar(255) DEFAULT '',
+  `model` varchar(255) NOT NULL DEFAULT 'default',
+  `auth` varchar(255) NOT NULL DEFAULT ''
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Index pour les tables déchargées
 --
+
+--
+-- Index pour la table `apikeys`
+--
+ALTER TABLE `apikeys`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Index pour la table `chats`
@@ -92,6 +128,12 @@ ALTER TABLE `users`
 --
 -- AUTO_INCREMENT pour les tables déchargées
 --
+
+--
+-- AUTO_INCREMENT pour la table `apikeys`
+--
+ALTER TABLE `apikeys`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `chats`

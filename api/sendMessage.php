@@ -4,7 +4,7 @@ if($_SERVER["REQUEST_METHOD"] != "POST" || empty($_SESSION["id"])) exit(header("
 
 require __DIR__ . "/../libs/libAccount.php";
 if(isBanned()) exit(http_response_code(403));
-if(!csrfCheck()) exit("No Token");
+if(!csrfCheck()) exit("Error: No Token! You might need to log in again...");
 
 require __DIR__ . "/../libs/lockFile.php";
 
@@ -29,11 +29,17 @@ else {
 }
 
 if(!empty($_POST["system"])) {
-  $query = $db->prepare("SELECT userID, sysmes, intro FROM systemchats WHERE ID = :id");
+  $query = $db->prepare("SELECT userID, sysmes, intro, isPub FROM systemchats WHERE ID = :id");
   $query->execute([':id' => intval($_POST["system"])]);
-  if($query->rowCount() == 0) exit("NO".unlock());
+  if($query->rowCount() == 0) {
+    unlock();
+    exit("Error: Custom chatbot not found");
+  }
   $rs = $query->fetch(PDO::FETCH_ASSOC);
-  if($rs["userID"] != $_SESSION["id"]) exit("Error".unlock());
+  if($rs["userID"] != $_SESSION["id"] && !$rs["isPub"]) {
+    unlock();
+    exit("Error: Unauthorized to use this custom chatbot");
+  }
   $defaultSys = $rs["sysmes"];
 }
 
@@ -44,16 +50,25 @@ if(!$createNewChat) {
   $tchat = $query->fetchColumn();
 
   if(!empty($tchat)) {
-    $query = $db->prepare("SELECT sysmes, userID FROM systemchats WHERE ID = :id");
+    $query = $db->prepare("SELECT sysmes, userID, isPub FROM systemchats WHERE ID = :id");
     $query->execute([':id' => $tchat]);
-    if($query->rowCount() == 0) exit("NO".unlock());
+    if($query->rowCount() == 0) {
+      unlock();
+      exit("Error: Custom chatbot not found");
+    }
     $rs = $query->fetch(PDO::FETCH_ASSOC);
-    if($rs["userID"] != $_SESSION["id"]) exit("Error".unlock());
+  	if($rs["userID"] != $_SESSION["id"] && !$rs["isPub"]) {
+      unlock();
+      exit("Error: Unauthorized to use this custom chatbot");
+    }
     $defaultSys = $rs["sysmes"];
   }
 }
 
-if(empty($_POST["message"])) exit("-1".unlock());
+if(empty($_POST["message"]))  {
+  unlock();
+  exit("Error: Message is empty");
+}
 
 $inputs = [];
 
@@ -75,7 +90,12 @@ if($createNewChat) {
 
 $inputs[] = ["role" => "user", "content" => $_POST["message"]];
 
-$input = ["messages" => $inputs];
+$input = ["messages" => $inputs, "temperature" => 1];
+
+$query = $db->prepare("SELECT model FROM users WHERE id=:id");
+$query->execute([':id' => $_SESSION["id"]]);
+$model = $query->fetchColumn();
+if($model != "default") $textAI = $model;
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, "https://api.cloudflare.com/client/v4/accounts/$accountID/ai/run/$textAI");
@@ -100,7 +120,14 @@ $status = $server_output["success"];
 
 curl_close($ch);
 
-$end = $status ? $message : "Error";
+require_once __DIR__ . '/../libs/HTMLPurifier/HTMLPurifier.auto.php';
+$config = HTMLPurifier_Config::createDefault();
+$purifier = new HTMLPurifier($config);
+
+$end = $status ? $purifier->purify($message) : "";
+if(empty($end)) {
+  unlock("Error: Unknown server error");
+}
 
 // LOG THE CONVERSATION
 

@@ -52,7 +52,6 @@ if(isBanned()) exit(printBan());
       }      
       #container {
         justify-content: flex-start;
-        margin-top: 5%;
       }
   	}
   
@@ -70,6 +69,9 @@ if(isBanned()) exit(printBan());
         flex-direction: row;
         background-color: transparent;
     }
+  	#cbox {
+  		background-color: transparent;	
+  	}
 </style>
 <body>
     <div id="container">
@@ -83,10 +85,11 @@ if(isBanned()) exit(printBan());
         <div id="forcetogether"><input type="text" id="chatName">&nbsp;<a href="javascript:void(0)" id="deletebtn">(delete)</a></div>
         <textarea id="systemText"></textarea>
         <textarea id="introText"></textarea>
+      	<div id="cbox"><input type="checkBox" id="isPub">Is Public</div>
         <button id="submit">Submit</button>
     </div>
     <script>
-        var newcontent = {ID: 0, name: "New Bot", sysmes: "Describe to me what I am!", intro: "How should I greet myself?"};
+        var newcontent = {ID: 0, name: "New Bot", sysmes: "Describe to me what I am!", intro: "How should I greet myself?", isPub: false};
         let content;
 
         deletebtn.addEventListener("click", () => {
@@ -136,6 +139,7 @@ if(isBanned()) exit(printBan());
             formData.append('chatID', chatID.value);
             formData.append('chatName', chatName.value);
             formData.append('systemText', systemText.value);
+          	formData.append('isPub', (isPub.checked ? 1 : 0));
             if(introText.value) {
                 formData.append('introText', introText.value);
             }
@@ -156,6 +160,7 @@ if(isBanned()) exit(printBan());
             chatName.value = carray.name;
             systemText.value = carray.sysmes;
             introText.value = carray.intro;
+          	isPub.checked = carray.isPub == 0 ? false : true;
         }
 
         chats.addEventListener("change", () => {
