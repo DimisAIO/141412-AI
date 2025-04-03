@@ -39,8 +39,9 @@ function chgPassword($old, $new, $confirm) {
   	if($new != $confirm) return -2; // New and Confirm Pass Don't Match
     $password = $new; // fuck my life
     if($password != $old && $password != $_SESSION["username"] && intval($password) != $password && strtolower($password) != $password && strlen($password) >= 12) {
-      $query = $db->prepare("UPDATE users SET password=:password, auth=:auth WHERE ID=:id");
-      $query->execute([':password' => password_hash($password, PASSWORD_DEFAULT), ':auth' => password_hash(newCSRFToken(), PASSWORD_DEFAULT), ':id' => $_SESSION["id"]]);
+      $query = $db->prepare("UPDATE users SET password=:password WHERE ID=:id");
+      $query->execute([':password' => password_hash($password, PASSWORD_DEFAULT), ':id' => $_SESSION["id"]]);
+      setAuthSecurity(true);
       return 1;
     } else return -3; // Failed to abide by password rules
 }
@@ -54,12 +55,17 @@ function checkUser($type, $string) {
     return $query->rowCount() != 0;
 }
 
-function setAuthSecurity() {
-   		require "db.php";
-        $token = newCSRFToken();
-      	$_SESSION["auth"] = $token;
-        $query = $db->prepare("UPDATE users SET auth=:auth WHERE ID=:id");
-        $query->execute([':auth' => password_hash($token, PASSWORD_DEFAULT), ':id' => $_SESSION["id"]]);
+function setAuthSecurity($force = false) {
+	require "db.php";
+	$query = $db->prepare("SELECT auth FROM users WHERE ID=:id");
+	$query->execute([':id' => $_SESSION["id"]]);
+	$token = $query->fetchColumn();
+  	if(empty($token) || $force) {
+        	$token = newCSRFToken();
+          	$query = $db->prepare("UPDATE users SET auth=:auth WHERE ID=:id");
+        	$query->execute([':auth' => $token, ':id' => $_SESSION["id"]]);
+        } 
+       	$_SESSION["auth"] = $token;
 }
 
 function isBanned() {
@@ -72,7 +78,7 @@ function isBanned() {
 	$auth = $query->fetchColumn();
   	if(empty($auth)) {
 		setAuthSecurity();
-    } elseif(!password_verify($_SESSION["auth"], $auth)) {
+    } elseif($_SESSION["auth"] != $auth) {
     	session_destroy();
       	exit(header("Location: /"));
     }
