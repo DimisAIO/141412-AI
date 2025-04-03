@@ -388,6 +388,12 @@ if($query->rowCount() != 0) {
         display: flex;
         align-items: center;
       }
+      #insidesc > img {
+        width: 10%;
+        height: 10%;
+        min-width: 10%;
+  		min-height: 10%;
+      }
       #you {
         display: flex;
         align-items: center;
@@ -438,7 +444,7 @@ if($query->rowCount() != 0) {
                       $saName = htmlspecialchars($query->fetchColumn());
                     } else $saName = $aiName;
                     echo "<div id='insidesc'>";
-                    echo "<img src='/image/$saID' width='10%'>&nbsp;";
+                    echo "<img src='/image/$saID'>&nbsp;";
                     echo "<span>";
                     echo "<a href='javascript:void(0)' onclick='delChat($id)' id='danger'>[X]</a>&nbsp;";
                     echo "<a href='javascript:void(0)' onclick='loadChat($id, $saID, \"$saName\")' id='henry'>$title</a>";
