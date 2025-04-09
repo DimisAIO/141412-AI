@@ -629,6 +629,8 @@ if($query->rowCount() != 0) {
         });
 
         function choose(chattxt, introtxt, name) {
+          // cmon
+	  document.getElementById("chatID").value = 0;
           system.value = chattxt; // cyka blyat
           intro.style.display = "none";
           chat.innerHTML = `<center><h1 class="rainbow_text_animated">${name}</h1><a href="javascript:void(0)" onclick='choose(${chattxt}, "${introtxt}", "${escapeHtml(name)}")'>New chat with bot</a></center>`;
