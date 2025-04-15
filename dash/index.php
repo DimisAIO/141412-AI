@@ -523,6 +523,7 @@ if($query->rowCount() != 0) {
     <input type="hidden" id="system">
     <input type="hidden" id="chatID">
     <script>
+      	if(!rdivbtn[1]) rdivbtn = document.querySelectorAll("#rdivbtn"); //fix de paresseux je sais
         let chatbotname = "<?=$aiName?>";
 	
       	function showGenerating() {
